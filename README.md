@@ -189,6 +189,14 @@ datasource db {
 }
 ```
 
+> **Heads up:** this edit and your local `.env` (which points `DATABASE_URL`
+> at a SQLite file) are now out of sync — `provider` must match the kind of
+> URL in `DATABASE_URL` or Prisma refuses to run (`P1012` schema validation
+> error). If you're switching back and forth between local SQLite dev and
+> Docker/Postgres, either keep two schema files and swap them, or just commit
+> to Postgres everywhere (Section 4 works fine against a local Postgres
+> instance too — just change `DATABASE_URL`, no code changes needed).
+
 Then run migrations against the containerized Postgres once it's up:
 
 ```bash
