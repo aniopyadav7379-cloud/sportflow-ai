@@ -1,0 +1,264 @@
+// SportFlow AI — database schema
+// Dev default: SQLite (file-based, zero setup). Production: point DATABASE_URL
+// at Postgres (e.g. "postgresql://user:pass@host:5432/db") — the schema below
+// is Postgres-compatible as-is; just switch the datasource provider.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Prisma requires a literal provider (env() only works for `url`).
+  // Dev default is SQLite for zero-setup local running. For production,
+  // change this to "postgresql", set DATABASE_URL to your Postgres
+  // connection string, and run `npx prisma migrate deploy`.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Role is a plain string (not a Prisma enum) because SQLite has no native
+// enum type. Valid values: ADMIN | CLUB_MANAGER | COACH | SCOUT | VIEWER.
+// Swapping to Postgres later would let you convert this to a true enum.
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("VIEWER")
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+model Club {
+  id          String   @id @default(cuid())
+  name        String
+  city        String
+  country     String
+  founded     Int
+  status      String   @default("Active") // Active | Inactive
+  logoColor   String   @default("#4f6bfd")
+  logoUrl     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teams    Team[]
+  players  Player[]
+  venues   Venue[]
+  sponsors Sponsor[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  category  String
+  coach     String
+  matches   Int      @default(0)
+  winPct    Int      @default(0)
+  status    String   @default("Active")
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  players   Player[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Player {
+  id           String   @id @default(cuid())
+  name         String
+  jersey       Int
+  position     String
+  age          Int
+  height       String
+  weight       String
+  foot         String   @default("Right")
+  nationality  String
+  overall      Float    @default(0)
+  fitness      Int      @default(100)
+  form         String   @default("Good")
+  matches      Int      @default(0)
+  goals        Int      @default(0)
+  assists      Int      @default(0)
+  marketValue  String   @default("₹0")
+  photoUrl     String?
+  clubId       String
+  club         Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  teamId       String?
+  team         Team?    @relation(fields: [teamId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  matchStats PlayerMatchStat[]
+}
+
+model League {
+  id        String   @id @default(cuid())
+  name      String
+  sport     String
+  matchday  String
+  status    String   @default("Live")
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  matches Match[]
+  standings StandingsRow[]
+}
+
+model Match {
+  id       String   @id @default(cuid())
+  homeTeam String
+  awayTeam String
+  date     DateTime
+  venueId  String?
+  venue    Venue?   @relation(fields: [venueId], references: [id])
+  leagueId String?
+  league   League?  @relation(fields: [leagueId], references: [id])
+  status   String   @default("Upcoming") // Live | Upcoming | Completed | Cancelled
+  homeScore Int?
+  awayScore Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stats PlayerMatchStat[]
+}
+
+model Venue {
+  id          String   @id @default(cuid())
+  name        String
+  location    String
+  type        String   @default("Stadium") // Stadium | Indoor | Training Ground
+  capacity    Int
+  surface     String   @default("Grass")
+  utilization Int      @default(0)
+  status      String   @default("Active") // Active | Maintenance
+  imageUrl    String?
+  clubId      String?
+  club        Club?    @relation(fields: [clubId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  matches  Match[]
+  bookings Booking[]
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  title     String
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  start     DateTime
+  end       DateTime
+  status    String   @default("Confirmed") // Confirmed | Pending | Cancelled
+  createdAt DateTime @default(now())
+}
+
+model ScoutedPlayer {
+  id         String   @id @default(cuid())
+  name       String
+  position   String
+  age        Int
+  country    String
+  team       String
+  overall    Int
+  potential  String   @default("Medium") // High | Medium | Low
+  stage      String   @default("Prospect") // Prospect | Shortlisted | OnTrial | Signed | Rejected
+  photoUrl   String?
+  strengths  String   @default("[]") // JSON-encoded string[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Sponsor {
+  id        String   @id @default(cuid())
+  company   String
+  package   String
+  startDate DateTime
+  endDate   DateTime
+  value     Float
+  status    String   @default("Active") // Active | Pending | Expired
+  clubId    String?
+  club      Club?    @relation(fields: [clubId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ticket {
+  id        String   @id @default(cuid())
+  matchId   String?
+  type      String   // General | VIP | Season Pass
+  price     Float
+  quantity  Int
+  sold      Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model StaffMember {
+  id         String   @id @default(cuid())
+  name       String
+  department String   // Staff | Equipment | Transport | Volunteers | Medical | Security
+  role       String
+  status     String   @default("Available")
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model StandingsRow {
+  id        String   @id @default(cuid())
+  leagueId  String
+  league    League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  team      String
+  played    Int      @default(0)
+  won       Int      @default(0)
+  drawn     Int      @default(0)
+  lost      Int      @default(0)
+  goalsFor  Int      @default(0)
+  goalsAgainst Int   @default(0)
+  points    Int      @default(0)
+  form      String   @default("[]") // JSON-encoded string[] e.g. ["W","D","L"]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([leagueId, team])
+}
+
+model PlayerMatchStat {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  matchId   String?
+  match     Match?   @relation(fields: [matchId], references: [id])
+  opponent  String
+  date      DateTime
+  scoreLine String   // e.g. "2 - 1"
+  rating    Float
+  goals     Int      @default(0)
+  assists   Int      @default(0)
+  minutes   Int      @default(90)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // e.g. "CREATE", "UPDATE", "DELETE"
+  entity    String   // e.g. "Player", "Club"
+  entityId  String?
+  metadata  String?  // JSON-encoded details
+  createdAt DateTime @default(now())
+}

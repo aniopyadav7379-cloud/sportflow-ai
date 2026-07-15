@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+*.md
+.env
+.env.local
+prisma/dev.db
+prisma/migrations
+__tests__
+coverage
