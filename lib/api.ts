@@ -30,7 +30,7 @@ export function withApi(handler: Handler, opts?: { minRole?: Role; limit?: numbe
     const { ok: allowed } = rateLimit(`${clientKey(req)}:${req.nextUrl.pathname}`, opts?.limit ?? 120);
     if (!allowed) return fail("Too many requests — please slow down.", 429);
 
-    const session = getSession(req);
+    const session = await getSession(req);
 
     if (opts?.minRole && !hasRole(session, opts.minRole)) {
       return fail(session ? "Insufficient permissions" : "Authentication required", session ? 403 : 401);

@@ -1,40 +1,44 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { ok, withApi } from "@/lib/api";
+import { ok, fail, withApi } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
 
-const createSchema = z.object({
-  name: z.string().min(2).max(120),
-  city: z.string().min(1),
-  country: z.string().min(1),
-  founded: z.number().int().min(1850).max(new Date().getFullYear()),
-  status: z.enum(["Active", "Inactive"]).default("Active"),
-  logoColor: z.string().default("#4f6bfd"),
+const updateSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  founded: z.number().int().optional(),
+  status: z.enum(["Active", "Inactive"]).optional(),
+  logoColor: z.string().optional(),
   description: z.string().optional(),
 });
 
-export const GET = withApi(async (req) => {
-  const q = req.nextUrl.searchParams.get("q")?.trim();
-  const clubs = await prisma.club.findMany({
-    where: q ? { name: { contains: q } } : undefined,
-    include: { _count: { select: { teams: true, players: true } } },
-    orderBy: { name: "asc" },
+export const GET = withApi(async (_req, { params }) => {
+  const club = await prisma.club.findUnique({
+    where: { id: params.id },
+    include: { teams: true, players: true, venues: true },
   });
-  return ok(
-    clubs.map((c) => ({
-      ...c,
-      teamsCount: c._count.teams,
-      playersCount: c._count.players,
-    }))
-  );
+  if (!club) return fail("Club not found", 404);
+  return ok(club);
 });
 
-export const POST = withApi(
-  async (req, { session }) => {
-    const body = createSchema.parse(await req.json());
-    const club = await prisma.club.create({ data: body });
-    await logAudit({ userId: session!.sub, action: "CREATE", entity: "Club", entityId: club.id });
-    return ok(club, 201);
+export const PATCH = withApi(
+  async (req, { params, session }) => {
+    const body = updateSchema.parse(await req.json());
+    const club = await prisma.club.update({ where: { id: params.id }, data: body }).catch(() => null);
+    if (!club) return fail("Club not found", 404);
+    await logAudit({ userId: session!.sub, action: "UPDATE", entity: "Club", entityId: club.id, metadata: body });
+    return ok(club);
   },
   { minRole: "CLUB_MANAGER" }
+);
+
+export const DELETE = withApi(
+  async (_req, { params, session }) => {
+    const club = await prisma.club.delete({ where: { id: params.id } }).catch(() => null);
+    if (!club) return fail("Club not found", 404);
+    await logAudit({ userId: session!.sub, action: "DELETE", entity: "Club", entityId: params.id });
+    return ok({ deleted: true });
+  },
+  { minRole: "ADMIN" }
 );

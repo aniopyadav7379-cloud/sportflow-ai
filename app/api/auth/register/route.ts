@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     await logAudit({ userId: user.id, action: "CREATE", entity: "User", entityId: user.id });
 
-    const token = signToken({ sub: user.id, email: user.email, role: user.role, name: user.name });
+    const token = await signToken({ sub: user.id, email: user.email, role: user.role, name: user.name });
     const res = ok({ id: user.id, name: user.name, email: user.email, role: user.role }, 201);
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true,

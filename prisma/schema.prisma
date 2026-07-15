@@ -8,11 +8,7 @@ generator client {
 }
 
 datasource db {
-  // Prisma requires a literal provider (env() only works for `url`).
-  // Dev default is SQLite for zero-setup local running. For production,
-  // change this to "postgresql", set DATABASE_URL to your Postgres
-  // connection string, and run `npx prisma migrate deploy`.
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

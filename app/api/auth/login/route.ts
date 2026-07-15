@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       return fail("Invalid email or password.", 401);
     }
 
-    const token = signToken({ sub: user.id, email: user.email, role: user.role, name: user.name });
+    const token = await signToken({ sub: user.id, email: user.email, role: user.role, name: user.name });
     const res = ok({ id: user.id, name: user.name, email: user.email, role: user.role });
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true,

@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { hashPassword, verifyPassword, signToken, verifyToken, hasRole } from "@/lib/auth";
 
 describe("auth: password hashing", () => {
@@ -12,16 +15,16 @@ describe("auth: password hashing", () => {
 describe("auth: JWT sign/verify", () => {
   const payload = { sub: "user_123", email: "test@example.com", role: "COACH" as const, name: "Test User" };
 
-  it("round-trips a signed token", () => {
-    const token = signToken(payload);
-    const decoded = verifyToken(token);
+  it("round-trips a signed token", async () => {
+    const token = await signToken(payload);
+    const decoded = await verifyToken(token);
     expect(decoded?.sub).toBe(payload.sub);
     expect(decoded?.role).toBe("COACH");
   });
 
-  it("rejects a tampered token", () => {
-    const token = signToken(payload);
-    expect(verifyToken(token + "tampered")).toBeNull();
+  it("rejects a tampered token", async () => {
+    const token = await signToken(payload);
+    expect(await verifyToken(token + "tampered")).toBeNull();
   });
 });
 
