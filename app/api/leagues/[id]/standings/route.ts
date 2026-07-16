@@ -30,7 +30,18 @@ export const POST = withApi(
     const row = await prisma.standingsRow.upsert({
       where: { leagueId_team: { leagueId: params.id, team: body.team } },
       update: { ...body, form: JSON.stringify(body.form) },
-      create: { ...body, form: JSON.stringify(body.form), leagueId: params.id },
+      create: {
+        team: body.team,
+        played: body.played,
+        won: body.won,
+        drawn: body.drawn,
+        lost: body.lost,
+        goalsFor: body.goalsFor,
+        goalsAgainst: body.goalsAgainst,
+        points: body.points,
+        form: JSON.stringify(body.form),
+        leagueId: params.id as string,
+      },
     });
     await logAudit({ userId: session!.sub, action: "UPDATE", entity: "StandingsRow", entityId: row.id });
     return ok({ ...row, form: JSON.parse(row.form) }, 201);

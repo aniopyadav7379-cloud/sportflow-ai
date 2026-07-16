@@ -1,20 +1,18 @@
 // SportFlow AI — database schema
-// Dev default: SQLite (file-based, zero setup). Production: point DATABASE_URL
-// at Postgres (e.g. "postgresql://user:pass@host:5432/db") — the schema below
-// is Postgres-compatible as-is; just switch the datasource provider.
+// Uses Postgres in all environments (DATABASE_URL should be a postgresql:// connection string).
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Role is a plain string (not a Prisma enum) because SQLite has no native
-// enum type. Valid values: ADMIN | CLUB_MANAGER | COACH | SCOUT | VIEWER.
-// Swapping to Postgres later would let you convert this to a true enum.
+// Role is a plain string (not a Prisma enum) for simplicity/portability.
+// Valid values: ADMIN | CLUB_MANAGER | COACH | SCOUT | VIEWER.
 
 model User {
   id           String   @id @default(cuid())

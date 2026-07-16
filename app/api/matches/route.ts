@@ -25,7 +25,16 @@ export const GET = withApi(async (req) => {
 export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
-    const match = await prisma.match.create({ data: body });
+    const match = await prisma.match.create({
+      data: {
+        homeTeam: body.homeTeam,
+        awayTeam: body.awayTeam,
+        date: body.date,
+        venueId: body.venueId,
+        leagueId: body.leagueId,
+        status: body.status,
+      },
+    });
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "Match", entityId: match.id });
     return ok(match, 201);
   },

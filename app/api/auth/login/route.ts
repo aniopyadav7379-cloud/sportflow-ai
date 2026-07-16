@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword, signToken, AUTH_COOKIE } from "@/lib/auth";
+import { verifyPassword, signToken, AUTH_COOKIE, Role } from "@/lib/auth";
 import { ok, fail, handleError } from "@/lib/api";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
 
@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
       return fail("Invalid email or password.", 401);
     }
 
-    const token = await signToken({ sub: user.id, email: user.email, role: user.role, name: user.name });
+    const token = await signToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role as Role,
+      name: user.name,
+    });
     const res = ok({ id: user.id, name: user.name, email: user.email, role: user.role });
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true,

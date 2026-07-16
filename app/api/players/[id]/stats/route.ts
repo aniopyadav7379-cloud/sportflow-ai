@@ -27,7 +27,19 @@ export const GET = withApi(async (req, { params }) => {
 export const POST = withApi(
   async (req, { params, session }) => {
     const body = createSchema.parse(await req.json());
-    const stat = await prisma.playerMatchStat.create({ data: { ...body, playerId: params.id } });
+    const stat = await prisma.playerMatchStat.create({
+      data: {
+        matchId: body.matchId,
+        opponent: body.opponent,
+        date: body.date,
+        scoreLine: body.scoreLine,
+        rating: body.rating,
+        goals: body.goals,
+        assists: body.assists,
+        minutes: body.minutes,
+        playerId: params.id as string,
+      },
+    });
 
     // Keep the player's season totals roughly in sync.
     await prisma.player.update({

@@ -22,7 +22,15 @@ export const GET = withApi(async () => {
 export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
-    const league = await prisma.league.create({ data: body });
+    const league = await prisma.league.create({
+      data: {
+        name: body.name,
+        sport: body.sport,
+        matchday: body.matchday,
+        status: body.status,
+        progress: body.progress,
+      },
+    });
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "League", entityId: league.id });
     return ok(league, 201);
   },

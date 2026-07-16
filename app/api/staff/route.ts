@@ -22,7 +22,14 @@ export const GET = withApi(async (req) => {
 export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
-    const staff = await prisma.staffMember.create({ data: body });
+    const staff = await prisma.staffMember.create({
+      data: {
+        name: body.name,
+        department: body.department,
+        role: body.role,
+        status: body.status,
+      },
+    });
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "StaffMember", entityId: staff.id });
     return ok(staff, 201);
   },

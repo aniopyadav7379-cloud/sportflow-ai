@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, signToken, AUTH_COOKIE } from "@/lib/auth";
+import { hashPassword, signToken, AUTH_COOKIE, Role } from "@/lib/auth";
 import { ok, fail, handleError } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
 import { rateLimit, clientKey } from "@/lib/rateLimit";
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     await logAudit({ userId: user.id, action: "CREATE", entity: "User", entityId: user.id });
 
-    const token = await signToken({ sub: user.id, email: user.email, role: user.role, name: user.name });
+    const token = await signToken({ sub: user.id, email: user.email, role: user.role as Role, name: user.name });
     const res = ok({ id: user.id, name: user.name, email: user.email, role: user.role }, 201);
     res.cookies.set(AUTH_COOKIE, token, {
       httpOnly: true,

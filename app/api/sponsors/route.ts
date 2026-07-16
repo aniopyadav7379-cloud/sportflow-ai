@@ -21,7 +21,17 @@ export const GET = withApi(async () => {
 export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
-    const sponsor = await prisma.sponsor.create({ data: body });
+    const sponsor = await prisma.sponsor.create({
+      data: {
+        company: body.company,
+        package: body.package,
+        startDate: body.startDate,
+        endDate: body.endDate,
+        value: body.value,
+        status: body.status,
+        clubId: body.clubId,
+      },
+    });
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "Sponsor", entityId: sponsor.id });
     return ok(sponsor, 201);
   },

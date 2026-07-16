@@ -29,7 +29,18 @@ export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
     const player = await prisma.scoutedPlayer.create({
-      data: { ...body, strengths: JSON.stringify(body.strengths) },
+      data: {
+        name: body.name,
+        position: body.position,
+        age: body.age,
+        country: body.country,
+        team: body.team,
+        overall: body.overall,
+        potential: body.potential,
+        stage: body.stage,
+        photoUrl: body.photoUrl,
+        strengths: JSON.stringify(body.strengths),
+      },
     });
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "ScoutedPlayer", entityId: player.id });
     return ok({ ...player, strengths: body.strengths }, 201);

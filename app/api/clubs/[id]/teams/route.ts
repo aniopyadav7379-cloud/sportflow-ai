@@ -13,7 +13,15 @@ const createSchema = z.object({
 export const POST = withApi(
   async (req, { params, session }) => {
     const body = createSchema.parse(await req.json());
-    const team = await prisma.team.create({ data: { ...body, clubId: params.id } });
+    const team = await prisma.team.create({
+      data: {
+        name: body.name,
+        category: body.category,
+        coach: body.coach,
+        status: body.status,
+        clubId: params.id as string,
+      },
+    });
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "Team", entityId: team.id });
     return ok(team, 201);
   },
