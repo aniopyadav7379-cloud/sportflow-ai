@@ -50,7 +50,40 @@ export const GET = withApi(async (req) => {
 export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
-    const player = await prisma.player.create({ data: body });
+
+const player = await prisma.player.create({
+  data: {
+    name: body.name,
+    jersey: body.jersey,
+    position: body.position,
+    age: body.age,
+    height: body.height,
+    weight: body.weight,
+    foot: body.foot,
+    nationality: body.nationality,
+    overall: body.overall,
+    fitness: body.fitness,
+    form: body.form,
+    marketValue: body.marketValue,
+    photoUrl: body.photoUrl ?? null,
+
+    club: {
+      connect: {
+        id: body.clubId,
+      },
+    },
+
+    ...(body.teamId
+      ? {
+          team: {
+            connect: {
+              id: body.teamId,
+            },
+          },
+        }
+      : {}),
+  },
+});
     await logAudit({ userId: session!.sub, action: "CREATE", entity: "Player", entityId: player.id });
     return ok(player, 201);
   },

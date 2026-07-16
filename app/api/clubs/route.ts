@@ -32,8 +32,26 @@ export const GET = withApi(async (req) => {
 export const POST = withApi(
   async (req, { session }) => {
     const body = createSchema.parse(await req.json());
-    const club = await prisma.club.create({ data: body });
-    await logAudit({ userId: session!.sub, action: "CREATE", entity: "Club", entityId: club.id });
+
+    const club = await prisma.club.create({
+      data: {
+        name: body.name,
+        city: body.city,
+        country: body.country,
+        founded: body.founded,
+        status: body.status,
+        logoColor: body.logoColor,
+        description: body.description ?? null,
+      },
+    });
+
+    await logAudit({
+      userId: session!.sub,
+      action: "CREATE",
+      entity: "Club",
+      entityId: club.id,
+    });
+
     return ok(club, 201);
   },
   { minRole: "CLUB_MANAGER" }
